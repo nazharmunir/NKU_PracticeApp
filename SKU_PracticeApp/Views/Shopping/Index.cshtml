@@ -1,0 +1,112 @@
+﻿@model IEnumerable<Product>
+@{
+    ViewData["Title"] = "Shopping";
+}
+
+<h2>Products</h2>
+
+<div class="container">
+    <div class="row">
+        <div class="col-md-9">
+            <!-- Products display -->
+            <div class="row">
+                @foreach (var product in Model)
+                {
+                    <div class="col-md-4 mb-4">
+                        <div class="card">
+                            <div class="card-body">
+                                <h5 class="card-title">@product.Name</h5>
+                                <p class="card-text">@product.Description</p>
+                                <p class="card-text">Price: $@product.Price</p>
+                                <p class="card-text">Discount: (@product.Discount)%</p>
+                                <button class="btn btn-primary" onclick="addToCart(@product.Id, '@product.Name', @product.Price, @product.Discount)">Add to Cart</button>
+                            </div>
+                        </div>
+                    </div>
+                }
+            </div>
+        </div>
+        <div class="col-md-3" style="position: fixed; top: 0; right: 0; width: calc(100% / 3); height: 100%; background-color: #f8f9fa; padding: 20px; box-shadow: -2px 0 5px rgba(0, 0, 0, 0.1); overflow-y: auto;">
+            <!-- Shopping cart -->
+            <div class="cart">
+                <h3>Shopping Cart</h3>
+                <h3>Note: Total price should be of 5000 or more for the discount to be applied.</h3>
+                <ul id="cart-items"></ul>
+                <p>Total Price: $<span id="total-price">0</span></p>
+                <p>Grand Total (After discounts): $<span id="grand-total">0</span></p>
+                <button class="btn btn-success" onclick="placeOrder()">Buy</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script>
+    let cart = [];
+
+    function addToCart(productId, name, price, discount) {
+        const existingItem = cart.find(item => item.productId === productId);
+        if (existingItem) {
+            existingItem.quantity++;
+        } else {
+            cart.push({ productId, name, price, discount, quantity: 1 });
+        }
+        renderCart();
+    }
+
+    function renderCart() {
+        const cartItems = $('#cart-items');
+        cartItems.empty();
+        let totalPrice = 0;
+        let grandTotal = 0;
+
+        $.each(cart, function (index, item) {
+            totalPrice += item.price * item.quantity;
+            cartItems.append(`<li>${item.name} - $${item.price} x ${item.quantity}</li>`);
+        });
+
+        if (totalPrice > 5000) {
+            grandTotal = totalPrice - cart.reduce((acc, item) => acc + (item.price * item.quantity * (item.discount / 100)), 0);
+        } else {
+            grandTotal = totalPrice;
+        }
+
+        $('#total-price').text(totalPrice.toFixed(2));
+        $('#grand-total').text(grandTotal.toFixed(2));
+    }
+
+    function placeOrder() {
+        const order = {
+            items: cart.map(item => ({
+                productId: item.productId,
+                quantity: item.quantity,
+                unitPrice: item.price,
+                discount: item.discount
+            }))
+        };
+
+        $.ajax({
+            url: '/shopping/placeorder',
+            type: 'POST',
+            contentType: 'application/x-www-form-urlencoded',
+            data: $.param(order),
+            success: function (data) {
+                console.log(data);
+                if (data.success) {
+                    alert('Order placed successfully!'); 
+                    setTimeout(function () {
+                        window.location.href = `/Shopping/Index`;
+                    }, 2000); 
+                } else {
+                    alert('Failed to place order: ' + data.message);
+                }
+            },
+            error: function (xhr, status, error) {
+                alert('Error: ' + error);
+            }
+        });
+
+    }
+</script>
+

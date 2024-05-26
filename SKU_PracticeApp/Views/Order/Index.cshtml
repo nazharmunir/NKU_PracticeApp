@@ -1,0 +1,26 @@
+﻿@model List<Order>
+
+<div class="container">
+    <div class="row">
+        @foreach (var order in Model)
+        {
+            <div class="col-md-4 mb-4">
+                <div class="card">
+                    <div class="card-header">
+                        Order Id: @order.Id
+                    </div>
+                    <div class="card-body" style="height: 200px; overflow-y: auto;">
+                        <h5 class="card-title">Order Date: @order.OrderDate</h5>
+                        <p class="card-text">Total: $@order.OrderDetails.Sum(od => od.Quantity * od.UnitPrice)</p>
+                        <ul>
+                            @foreach (var item in order.OrderDetails)
+                            {
+                                <li>@item.Product.Name - Quantity: @item.Quantity, Price: $@item.UnitPrice</li>
+                            }
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+</div>
